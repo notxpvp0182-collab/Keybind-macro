@@ -1,11 +1,7 @@
-name: Build & Release JAR
+name: Build JAR
 
 on:
   push:
-    branches: [ main, master, dev ]
-    tags:
-      - 'v*'
-  pull_request:
     branches: [ main, master ]
   workflow_dispatch:
 
@@ -13,78 +9,11 @@ permissions:
   contents: write
 
 jobs:
-  # ─────────────────────────────────────────────────────────────────
   build:
-    name: Build JAR
     runs-on: ubuntu-latest
 
-    outputs:
-      version: ${{ steps.get_version.outputs.version }}
-      jar_name: ${{ steps.get_version.outputs.jar_name }}
-
     steps:
-      # 1. Checkout
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # 2. Java 21
-      - name: Set up Java 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-
-      # 3. Gradle cache
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      # 4. Make gradlew executable
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      # 5. Build
-      - name: Build with Gradle
-        run: ./gradlew build --no-daemon
-        env:
-          GRADLE_OPTS: "-Xmx2g -Xms512m"
-
-      # 6. Extract version & jar name
-      - name: Get version & jar info
-        id: get_version
-        run: |
-          VERSION=$(./gradlew properties --no-daemon -q | grep "^version:" | awk '{print $2}')
-          JAR_NAME=$(ls build/libs/*.jar | grep -v sources | grep -v javadoc | head -1 | xargs basename)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "jar_name=$JAR_NAME" >> $GITHUB_OUTPUT
-          echo "✅ Version: $VERSION"
-          echo "✅ JAR: $JAR_NAME"
-
-      # 7. Upload artifact (always available for download)
-      - name: Upload JAR artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: keyboard-macro-${{ steps.get_version.outputs.version }}
-          path: build/libs/*.jar
-          if-no-files-found: error
-          retention-days: 30
-
-  # ─────────────────────────────────────────────────────────────────
-  release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Java 21
         uses: actions/setup-java@v4
@@ -98,75 +27,16 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Build release JAR
-        run: ./gradlew build --no-daemon
-        env:
-          GRADLE_OPTS: "-Xmx2g -Xms512m"
-
-      - name: Get JAR path
-        id: jar
+      - name: Build JAR
         run: |
-          JAR=$(ls build/libs/*.jar | grep -v sources | grep -v javadoc | head -1)
-          echo "path=$JAR" >> $GITHUB_OUTPUT
-          echo "name=$(basename $JAR)" >> $GITHUB_OUTPUT
+          chmod +x gradlew
+          ./gradlew build --no-daemon
 
-      - name: Generate release notes
-        id: notes
-        run: |
-          TAG="${{ github.ref_name }}"
-          VERSION="${{ needs.build.outputs.version }}"
-          cat > release_notes.md << EOF
-          ## Keyboard Macro $TAG
-
-          > **Created by NoTXGameR**
-
-          ### 📦 Installation
-          1. Install [Fabric Loader](https://fabricmc.net/use/) for Minecraft 1.21.4
-          2. Install [Fabric API](https://modrinth.com/mod/fabric-api)
-          3. Install [Mod Menu](https://modrinth.com/mod/modmenu) *(recommended)*
-          4. Drop \`${{ steps.jar.outputs.name }}\` into your \`.minecraft/mods\` folder
-          5. Launch Minecraft
-
-          ### ⌨️ Usage
-          - Press **K** in-game to open the Macro GUI *(rebindable in Controls)*
-          - Go to **ESC → Mods → Keyboard Macro → Config** via Mod Menu
-          - Create profiles, assign trigger keys, chain actions
-
-          ### ✨ Features
-          - Unlimited keybind profiles
-          - 11 action types (hotbar, click, jump, chat commands, delay...)
-          - Zero-delay execution engine
-          - Water Clutch & Fast Pearl presets included
-          - JSON config with auto-backup & corruption recovery
-
-          ### 📋 Requirements
-          | | |
-          |---|---|
-          | Minecraft | 1.21.4 |
-          | Loader | Fabric |
-          | Java | 21 |
-          | Fabric API | Required |
-          | Mod Menu | Recommended |
-
-          ---
-          *Keyboard Macro — Created by NoTXGameR*
-          EOF
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ github.ref_name }}
-          name: "Keyboard Macro ${{ github.ref_name }}"
-          body_path: release_notes.md
-          files: ${{ steps.jar.outputs.path }}
-          draft: false
-          prerelease: ${{ contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') || contains(github.ref_name, '-rc') }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: keyboard-macro-jar
+          path: build/libs/*.jar
+          retention-days: 30
