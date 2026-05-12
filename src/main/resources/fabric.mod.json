@@ -1,1 +1,25 @@
-
+{
+  "schemaVersion": 1,
+  "id": "keyboard_macro",
+  "version": "1.0.0",
+  "name": "Keyboard Macro",
+  "description": "Ultra-fast keybind & macro system for PvP and utility. Created by NoTXGameR",
+  "authors": ["NoTXGameR"],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/keyboard_macro/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["com.notxgamer.keyboardmacro.KeyboardMacroMod"],
+    "modmenu": ["com.notxgamer.keyboardmacro.ModMenuIntegration"]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "fabric-api": "*",
+    "minecraft": "~1.21.4",
+    "java": ">=21"
+  },
+  "suggests": {
+    "modmenu": "*"
+  }
+}
