@@ -14,7 +14,7 @@
     "modmenu": ["com.notxgamer.keyboardmacro.ModMenuIntegration"]
   },
   "depends": {
-    "fabricloader": ">*",
+    "fabricloader": "*",
     "fabric-api": "*",
     "minecraft": "~1.21.4",
     "java": ">=21"
