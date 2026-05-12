@@ -1,1 +1,6 @@
-
+{
+  "key.keyboard_macro.open_gui": "Open Macro GUI",
+  "category.keyboard_macro": "Keyboard Macro",
+  "modmenu.nameTranslation.keyboard_macro": "Keyboard Macro",
+  "modmenu.descriptionTranslation.keyboard_macro": "Ultra-fast keybind & macro system for PvP and utility.\n\nCreate unlimited profiles, assign any key/mouse button, and execute instant action chains.\n\nCreated by NoTXGameR"
+}
